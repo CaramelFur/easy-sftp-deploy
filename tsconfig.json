@@ -2,13 +2,15 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "display": "Node 16",
 
-  "include": ["lib/**/*.ts"],
+  "include": ["lib/**/*.ts", "lib/**/*.js"],
 
   "compilerOptions": {
     "target": "ES2015",
     "module": "commonjs",
 
     "outDir": "./dist",
+    "declaration": true,
+    "allowJs": true,
 
     "strict": true,
     "esModuleInterop": true,

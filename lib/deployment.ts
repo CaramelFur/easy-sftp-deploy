@@ -13,8 +13,9 @@ import Client from 'ssh2-sftp-client';
 export async function ExecuteDeployment(
   config: SftpConfig,
   deploymentID: number,
+  log: (msg: string, color?: string) => void,
 ) {
-  console.info(`Executing deployment ${deploymentID + 1}`);
+  log(`Starting deployment ${deploymentID + 1}`);
 
   // Validate all data ======================================================
   const deployment: SftpDeployConfig = config.deployments[deploymentID];
@@ -47,7 +48,7 @@ export async function ExecuteDeployment(
 
   // Collect files ===========================================================
 
-  console.info(`Collecting files from ${srcAbsDir}`);
+  log(`Collecting files from ${srcAbsDir}`);
 
   const srcFiles = (await recursive(srcAbsDir, [])).map((file) =>
     file.replace(srcAbsDir, ''),
@@ -60,15 +61,16 @@ export async function ExecuteDeployment(
     .filter((folder, index, self) => self.indexOf(folder) === index);
 
   if (deployment.dryRun) {
-    console.info(`Create files:`);
+    log(`[Dry run]`);
+    log(`Create files:`);
     for (let i = 0; i < filteredSrcFiles.length; i++) {
-      console.info(
+      log(
         `  ${srcAbsDir}${filteredSrcFiles[i]} -> ${dstAbsDir}${filteredSrcFiles[i]}`,
       );
     }
-    console.info(`Create folders:`);
+    log(`Create folders:`);
     for (let i = 0; i < filteredSrcFolders.length; i++) {
-      console.info(
+      log(
         `  ${srcAbsDir}${filteredSrcFolders[i]} -> ${dstAbsDir}${filteredSrcFolders[i]}`,
       );
     }
@@ -77,7 +79,7 @@ export async function ExecuteDeployment(
 
   // Upload files ===========================================================
 
-  console.info(`Connecting to ${host.host}`);
+  log(`Connecting to ${host.host}`);
 
   const sftp = new Client();
   await sftp.connect({
@@ -97,13 +99,13 @@ export async function ExecuteDeployment(
   }
 
   if (deployment.clear) {
-    console.info(`Clearing target directory ${dstAbsDir}`);
+    log(`Clearing target directory ${dstAbsDir}`);
 
     try {
       const found = await sftp.list(dstAbsDir);
       for (let file of found) {
         const p = path.resolve(dstAbsDir, file.name);
-        console.info(`Deleting ${p}`);
+        log(`Deleting ${p}`);
 
         if (file.type === 'd') {
           await sftp.rmdir(p, true);
@@ -116,12 +118,12 @@ export async function ExecuteDeployment(
     }
   }
 
-  console.info(`Creating folders on ${dstAbsDir}`);
+  log(`Creating folders on ${dstAbsDir}`);
   for (let i = 0; i < filteredSrcFolders.length; i++) {
     const srcFolder = path.resolve(srcAbsDir, filteredSrcFolders[i]);
     const dstFolder = path.resolve(dstAbsDir, filteredSrcFolders[i]);
 
-    console.info(`(${i + 1}/${filteredSrcFolders.length}) ${dstFolder}`);
+    log(`(${i + 1}/${filteredSrcFolders.length}) ${dstFolder}`);
 
     try {
       await sftp.mkdir(dstFolder, true);
@@ -130,19 +132,17 @@ export async function ExecuteDeployment(
     }
   }
 
-  console.info(`Uploading files to ${dstAbsDir}`);
+  log(`Uploading files to ${dstAbsDir}`);
   for (let i = 0; i < filteredSrcFiles.length; i++) {
     const srcFile = path.resolve(srcAbsDir, filteredSrcFiles[i]);
     const dstFile = path.resolve(dstAbsDir, filteredSrcFiles[i]);
 
-    console.info(
-      `(${i + 1}/${filteredSrcFiles.length}) ${srcFile} -> ${dstFile}`,
-    );
+    log(`(${i + 1}/${filteredSrcFiles.length}) ${srcFile} -> ${dstFile}`);
 
     try {
       if (await sftp.exists(dstFile)) {
         if (!deployment.overwrite) {
-          console.info(`  Skipping, already exists`);
+          log(`  Skipping, already exists`);
           continue;
         }
       }
@@ -153,11 +153,11 @@ export async function ExecuteDeployment(
     }
   }
 
-  console.info(`Closing connection`);
+  log(`Closing connection`);
 
   await sftp.end();
 
-  console.info(`Deployment ${deploymentID + 1} finished`);
+  log(`Deployment ${deploymentID + 1} finished`);
 
   return;
 }
