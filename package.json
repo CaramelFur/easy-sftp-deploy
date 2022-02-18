@@ -1,0 +1,32 @@
+{
+  "name": "easy-sftp-deploy",
+  "version": "1.0.0",
+  "description": "Easily deploy files and directories to a server with sftp",
+  "main": "dist/index.js",
+  "repository": "https://github.com/rubikscraft/easy-sftp-deploy",
+  "author": "Rubikscraft <contact@rubikscraft.nl>",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+     "url": "https://github.com/rubikscraft/easy-sftp-deploy/issues"
+  },
+  "homepage": "https://github.com/rubikscraft/easy-sftp-deploy",
+  "keywords": ["upload", "deploy", "sftp", "ssh", "scp", "server"],
+  "private": false,
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc",
+    "start": "yarn build && node dist/index.js"
+  },
+  "dependencies": {
+    "micromatch": "^4.0.4",
+    "recursive-readdir": "^2.2.2",
+    "ssh2-sftp-client": "^7.2.2",
+    "zod": "^3.11.6"
+  },
+  "devDependencies": {
+    "@types/micromatch": "^4.0.2",
+    "@types/recursive-readdir": "^2.2.0",
+    "@types/ssh2-sftp-client": "^7.0.1",
+    "typescript": "^4.5.5"
+  }
+}
