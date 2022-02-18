@@ -11,6 +11,7 @@
   },
   "homepage": "https://github.com/rubikscraft/easy-sftp-deploy",
   "keywords": ["upload", "deploy", "sftp", "ssh", "scp", "server"],
+  "readme": "README.md",
   "private": false,
   "type": "commonjs",
   "scripts": {
