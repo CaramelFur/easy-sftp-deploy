@@ -60,7 +60,7 @@ export type SftpDeployConfig = z.infer<typeof sftpDeployConfig>;
 export const sftpConfig = z.object({
   credentials: sftpCredentialsConfig,
   hosts: sftpHostsConfig,
-  sourcefolders: sftpSrcsConfig,
+  sourceFolders: sftpSrcsConfig,
   deployments: z.array(sftpDeployConfig),
 });
 
