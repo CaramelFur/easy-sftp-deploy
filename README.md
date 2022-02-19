@@ -56,14 +56,17 @@ credentialsID: string
 
 ### Source Folders
 
-For a source folder configuration you firstly specify a folder on your local system. This can be either a relative or absolute path. The program will then recursively locate all files in this folder automatically, this includes hidden files. It does however skip empty directories, so if you need a directory to exist, you need to add a file to it.
+For a source folder configuration you firstly specify a folder on your local system. This can be either a relative or absolute path. The program will then recursively locate all files in this folder automatically. By default it includes hidden dot files, and excludes empty directories. If you wish to change this you can do so with the `includeDotFiles` and `includeAllFolders` flags.
 
-Then you can also specify a list of filters for this directory. Here [micromatch](https://www.npmjs.com/package/micromatch) will be used internally, so you can use all the same wildcard configurations as that library allows. 
+Then you can also specify a list of filters for this directory. Here [micromatch](https://www.npmjs.com/package/micromatch) will be used internally, so you can use all the same wildcard configurations as that library allows.
 The not empty match ("!") will always be added to this filterlist, and dotfiles will be matched, so keep this in mind when adding filters.
 
 ```txt
-path: string
+folder: string
 filters: [string] (optional)
+
+includeDotFiles: boolean (optional, default is true)
+includeAllFolders: boolean (optional, default is false)
 ```
 
 ### Deployments
@@ -149,8 +152,11 @@ await DeployToSftp({
   },
   sourceFolders: {
     htmldist: {
-      directory: './dist',
-      filter: ['**/*.html'],
+      folder: './dist',
+      filters: ['**/*.html'],
+
+      includeDotFiles: false,
+      includeAllFolders: true,
     },
   },
   deployments: [
@@ -184,7 +190,7 @@ First you create a config file `sftp.json`:
 {
   "credentials": { "main": { "username": "bob", "password": "pass" } },
   "hosts": { "main": { "host": "1.2.1.2", "credentialsID": "main" } },
-  "sourceFolders": { "dist": { "directory": "./dist" } },
+  "sourceFolders": { "dist": { "folder": "./dist" } },
   "deployments": [
     {
       "hostID": "main",
@@ -208,6 +214,13 @@ If you find any bugs, please open an issue, without feedback I'll never know the
 
 ## Releases
 
+* [1.3.0]
+  * Added support for empty directories
+  * Easily ignore dotfiles
+  * Switched to custom recursive lister
+  * Made json type checking more strict
+  * Rename `directory` property in `sourceFolders` to `folder`
+  * Rename `filter` property in `sourceFolders` to `filters`
 * [1.2.0]
   * Added colored output
   * Added better readme

@@ -5,11 +5,11 @@ import {
   SftpHostConfig,
 } from './config';
 import micromatch from 'micromatch';
-import recursive from 'recursive-readdir';
 import fs from 'fs';
 import path from 'path';
 import Client from 'ssh2-sftp-client';
 import { SftpLoggerType } from './logger';
+import readdir from './recursive-readdir';
 
 export async function ExecuteDeployment(
   config: SftpConfig,
@@ -47,9 +47,11 @@ export async function ExecuteDeployment(
     log(`Sourceconfig ${deployment.srcID} does not exist`, { type: 'error' });
     return false;
   }
+  if (src.includeAllFolders === undefined) src.includeAllFolders = false;
+  if (src.includeDotFiles === undefined) src.includeDotFiles = true;
 
-  const srcAbsDir = path.resolve(src.directory, './') + '/';
-  const dstAbsDir = path.resolve(deployment.dstFolder, './') + '/';
+  const srcAbsDir = path.resolve(src.folder) + path.sep;
+  const dstAbsDir = path.resolve(deployment.dstFolder) + path.sep;
 
   // check src.directory exists and is a directory
   if (
@@ -66,15 +68,34 @@ export async function ExecuteDeployment(
 
   log(`Collecting files from ${srcAbsDir}`, { color: 'cyan' });
 
-  const srcFiles = (await recursive(srcAbsDir, [])).map((file) =>
-    file.replace(srcAbsDir, ''),
-  );
-  const filteredSrcFiles = micromatch(srcFiles, ['!', ...(src.filter || [])], {
-    dot: true,
+  const { fileList, dirList } = await readdir(srcAbsDir, {
+    includeDotFiles: src.includeDotFiles,
+    includeFolders: src.includeAllFolders,
   });
-  const filteredSrcFolders = filteredSrcFiles
-    .map((file) => path.dirname(file))
-    .filter((folder, index, self) => self.indexOf(folder) === index);
+
+  // Remove absolute path and ensure non empty
+  const shortenedSrcFiles = fileList
+    .map((file) => file.replace(srcAbsDir, ''))
+    .filter((file) => file !== '');
+  const shortenedSrcFolders = dirList
+    .map((dir) => dir.replace(srcAbsDir, ''))
+    .filter((dir) => dir !== '');
+
+  // Extract all files and folders from the filelist
+  const filteredSrcFiles = micromatch(
+    shortenedSrcFiles,
+    ['!', ...(src.filters || [])],
+    {
+      dot: true,
+    },
+  );
+  const filteredSrcFolders = src.includeAllFolders
+    ? micromatch(shortenedSrcFolders, ['!', ...(src.filters || [])], {
+        dot: true,
+      })
+    : filteredSrcFiles.map((file) => path.dirname(file))
+        .filter((folder) => folder != '.')
+        .filter((folder, index, self) => self.indexOf(folder) === index);
 
   if (deployment.dryRun) {
     log(`[Dry run]`, { color: 'cyan', style: 'bold' });

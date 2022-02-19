@@ -7,21 +7,21 @@ export async function DeployToSftp(
   config: SftpConfig,
   logger: SftpLoggerType = SftpLogger,
 ): Promise<boolean> {
-  let parsed: SftpConfig | undefined = undefined;
-  try {
-    parsed = sftpConfig.parse(config);
-  } catch (e) {}
-  if (!parsed) {
-    if ((config as any)?.sourcefolders && !(config as any)?.sourceFolders){
-      logger('"sourcefolders" is deprecated, use "sourceFolders" instead', { type: 'error' });
-    }
+  const parsed = await sftpConfig.safeParseAsync(config);
+  if (!parsed.success) {
     logger('Invalid config', { type: 'error' });
+    logger(
+      'Since this package has just been released, the json scheme can still change. ' +
+        'Please check here for more info: https://github.com/rubikscraft/easy-sftp-deploy#releases',
+    );
     return false;
   }
 
+  const data = parsed.data;
+
   let totalResult = true;
-  for (let i = 0; i < parsed.deployments.length; i++) {
-    const result = await ExecuteDeployment(parsed, i, logger);
+  for (let i = 0; i < data.deployments.length; i++) {
+    const result = await ExecuteDeployment(data, i, logger);
     if (result === false) totalResult = false;
   }
 

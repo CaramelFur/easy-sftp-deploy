@@ -6,7 +6,7 @@ const sftpCredentialConfig = z.object({
   username: z.string(),
   password: z.string().optional(),
   privateKey: z.string().optional(),
-});
+}).strict();
 
 const sftpCredentialsConfig = z.record(sftpCredentialConfig);
 
@@ -20,7 +20,7 @@ const sftpHostConfig = z.object({
   credentialsID: z.string(),
 
   port: z.number().optional(),
-});
+}).strict();
 
 const sftpHostsConfig = z.record(sftpHostConfig);
 
@@ -30,10 +30,13 @@ export type SftpHostsConfig = z.infer<typeof sftpHostsConfig>;
 
 // Sources
 const sftpSrcConfig = z.object({
-  directory: z.string(),
+  folder: z.string(),
 
-  filter: z.array(z.string()).optional(),
-});
+  filters: z.array(z.string()).optional(),
+  
+  includeDotFiles: z.boolean().optional(),
+  includeAllFolders: z.boolean().optional(),
+}).strict();
 
 const sftpSrcsConfig = z.record(sftpSrcConfig);
 
@@ -51,7 +54,7 @@ const sftpDeployConfig = z.object({
   overwrite: z.boolean().optional(),
   clear: z.boolean().optional(),
   dryRun: z.boolean().optional(),
-});
+}).strict()
 
 // Deployments - typescript
 export type SftpDeployConfig = z.infer<typeof sftpDeployConfig>;
@@ -62,7 +65,7 @@ export const sftpConfig = z.object({
   hosts: sftpHostsConfig,
   sourceFolders: sftpSrcsConfig,
   deployments: z.array(sftpDeployConfig),
-});
+}).strict();
 
 // Main config - typescript
 export type SftpConfig = z.infer<typeof sftpConfig>;
