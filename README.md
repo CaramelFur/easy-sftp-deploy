@@ -214,6 +214,11 @@ If you find any bugs, please open an issue, without feedback I'll never know the
 
 ## Releases
 
+* [1.3.2]
+  * Update dependencies
+  * Fix license in package.json not matching the git license
+* [1.3.1]
+  * Fix metadata in package.json
 * [1.3.0]
   * Added support for empty directories
   * Easily ignore dotfiles
