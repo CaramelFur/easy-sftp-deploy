@@ -214,6 +214,8 @@ If you find any bugs, please open an issue, without feedback I'll never know the
 
 ## Releases
 
+* [1.3.3]
+  * Update dependencies
 * [1.3.2]
   * Update dependencies
   * Fix license in package.json not matching the git license
