@@ -214,9 +214,7 @@ If you find any bugs, please open an issue, without feedback I'll never know the
 
 ## Releases
 
-* [1.3.4]
-  * Update dependencies
-* [1.3.3]
+* [1.3.3 - 1.3.5]
   * Update dependencies
 * [1.3.2]
   * Update dependencies
