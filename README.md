@@ -1,4 +1,4 @@
-# easy-sftp-deploy
+# Easy SFTP deploy
 
 Thusfar every sftp deploy package I've tried has been terrible, so I thought I'd make my own better one.
 
@@ -25,8 +25,8 @@ Both the cli and and javascript interface accept the same configuraton options.
 
 The top level configuration accepts 4 options:
 
-```txt
-credentials: { [credtialID]: credentialConfig }
+```yml
+credentials: { [credentialID]: credentialConfig }
 hosts: { [hostID]: hostConfig }
 sourceFolders: { [sourceFolderID]: sourceFolderConfig }
 deployments: [deploymentConfig]
@@ -36,7 +36,7 @@ deployments: [deploymentConfig]
 
 The credential configuration options are all pretty self explanatory.
 
-```txt
+```yml
 username: string
 password: string (optional)
 privateKey: string (optional)
@@ -47,7 +47,7 @@ privateKey: string (optional)
 For the host configuration you can specify the hostname and port as expected.
 But for the credentials, you need to reference one of the configured credentials. This allows you to more easily reuse credentials between multiple hosts without a giant configuration file.
 
-```txt
+```yml
 hostname: string
 port: number (optional, default is 22)
 
@@ -61,7 +61,7 @@ For a source folder configuration you firstly specify a folder on your local sys
 Then you can also specify a list of filters for this directory. Here [micromatch](https://www.npmjs.com/package/micromatch) will be used internally, so you can use all the same wildcard configurations as that library allows.
 The not empty match ("!") will always be added to this filterlist, and dotfiles will be matched, so keep this in mind when adding filters.
 
-```txt
+```yml
 folder: string
 filters: [string] (optional)
 
@@ -81,7 +81,7 @@ It also has a couple flags you can set:
 * clear - Clear the target directory before uploading, ignores overwrite flag.
 * dryRun - Only print what files will be uploaded.
 
-```txt
+```yml
 hostID: string
 sourceFolderID: string
 targetFolder: string
@@ -103,8 +103,9 @@ This package only really exports two functions:
 You can import it with:
 
 ```js
+// ES6 Style
 import { DeployToSftp } from 'easy-sftp-deploy';
-// or
+// CommonJS Style
 const { DeployToSftp } = require('easy-sftp-deploy');
 ```
 
@@ -214,7 +215,7 @@ If you find any bugs, please open an issue, without feedback I'll never know the
 
 ## Releases
 
-* [1.3.3 - 1.3.8]
+* [1.3.3 - 1.3.9]
   * Update dependencies
 * [1.3.2]
   * Update dependencies
