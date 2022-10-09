@@ -1,6 +1,6 @@
 {
   "name": "easy-sftp-deploy",
-  "version": "1.3.9",
+  "version": "1.4.0",
   "description": "Easily deploy files and directories to a server with sftp",
   "repository": "https://github.com/rubikscraft/easy-sftp-deploy",
   "author": "Rubikscraft <contact@rubikscraft.nl>",

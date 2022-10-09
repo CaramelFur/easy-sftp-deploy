@@ -45,11 +45,15 @@ privateKey: string (optional)
 ### Hosts
 
 For the host configuration you can specify the hostname and port as expected.
+There are also options for speeding up the connection using either fastPut for large files and/or parallelization for many files. Do keep in mind that both of these options might not work on all servers.
 But for the credentials, you need to reference one of the configured credentials. This allows you to more easily reuse credentials between multiple hosts without a giant configuration file.
 
 ```yml
 hostname: string
 port: number (optional, default is 22)
+
+useFastPut: boolean (optional, default is false)
+parallel: number (optional, default is 10)
 
 credentialsID: string
 ```
@@ -149,6 +153,9 @@ await DeployToSftp({
     backup: {
       host: '4.3.2.1',
       credentialsID: 'stevelogin',
+
+      useFastPut: true,
+      parallel: 50,
     },
   },
   sourceFolders: {
@@ -215,6 +222,8 @@ If you find any bugs, please open an issue, without feedback I'll never know the
 
 ## Releases
 
+* [1.4.0]
+  * Added support for parallel uploads
 * [1.3.3 - 1.3.9]
   * Update dependencies
 * [1.3.2]

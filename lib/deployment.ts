@@ -1,14 +1,15 @@
+import fs from 'fs';
+import micromatch from 'micromatch';
+import path from 'path';
+import Client from 'ssh2-sftp-client';
 import {
   SftpConfig,
   SftpCredentialConfig,
   SftpDeployConfig,
-  SftpHostConfig,
+  SftpHostConfig
 } from './config';
-import micromatch from 'micromatch';
-import fs from 'fs';
-import path from 'path';
-import Client from 'ssh2-sftp-client';
 import { SftpLoggerType } from './logger';
+import Parallelizor from './parallelizor';
 import readdir from './recursive-readdir';
 
 export async function ExecuteDeployment(
@@ -93,7 +94,8 @@ export async function ExecuteDeployment(
     ? micromatch(shortenedSrcFolders, ['!', ...(src.filters || [])], {
         dot: true,
       })
-    : filteredSrcFiles.map((file) => path.dirname(file))
+    : filteredSrcFiles
+        .map((file) => path.dirname(file))
         .filter((folder) => folder != '.')
         .filter((folder, index, self) => self.indexOf(folder) === index);
 
@@ -125,6 +127,7 @@ export async function ExecuteDeployment(
   log(`Connecting to ${host.host}`, { color: 'blue' });
 
   const sftp = new Client();
+  (sftp as any).client.setMaxListeners(host.parallel + 10);
   await sftp.connect({
     host: host.host,
     username: credentials.username,
@@ -142,24 +145,34 @@ export async function ExecuteDeployment(
     return false;
   }
 
+  const parallelizor = new Parallelizor<boolean>(host.parallel);
+
+  // Clear files ===========================================================
   if (deployment.clear) {
     log(`Clearing target directory ${dstAbsDir}`, { color: 'cyan' });
 
-    try {
-      const found = await sftp.list(dstAbsDir);
-      for (let file of found) {
-        const p = path.resolve(dstAbsDir, file.name);
-        log(`Deleting ${p}`, { color: 'yellow' });
+    const found = await sftp.list(dstAbsDir);
+    for (let i = 0; i < found.length; i++) {
+      const p = path.resolve(dstAbsDir, found[i].name);
+      log(`Deleting ${p}`, { color: 'yellow' });
 
-        if (file.type === 'd') {
-          await sftp.rmdir(p, true);
-        } else {
-          await sftp.delete(p);
+      const result = await parallelizor.run(async () => {
+        try {
+          if (found[i].type === 'd') {
+            await sftp.rmdir(p, true);
+          } else {
+            await sftp.delete(p);
+          }
+          return true;
+        } catch (e) {
+          log(`Could not delete ${p}`, { type: 'error' });
+          return false;
         }
+      }, i === found.length - 1);
+      
+      if (result.includes(false)) {
+        return false;
       }
-    } catch (e) {
-      log(`Could not clear directory ${dstAbsDir}`, { type: 'error' });
-      return false;
     }
   }
 
@@ -181,6 +194,10 @@ export async function ExecuteDeployment(
   }
 
   log(`Uploading files to ${dstAbsDir}`, { color: 'cyan' });
+  if (host.parallel > 1)
+    log(`  - Parallel uploads: ${host.parallel}`, { color: 'cyan' });
+  if (host.useFastPut) log(`  - Using fastPut`, { color: 'cyan' });
+
   for (let i = 0; i < filteredSrcFiles.length; i++) {
     const srcFile = path.resolve(srcAbsDir, filteredSrcFiles[i]);
     const dstFile = path.resolve(dstAbsDir, filteredSrcFiles[i]);
@@ -189,17 +206,26 @@ export async function ExecuteDeployment(
       color: 'yellow',
     });
 
-    try {
-      if (await sftp.exists(dstFile)) {
-        if (!deployment.overwrite) {
-          log(`  Skipping, already exists`, { type: 'error' });
-          continue;
+    const results = await parallelizor.run(async () => {
+      try {
+        if (await sftp.exists(dstFile)) {
+          if (!deployment.overwrite) {
+            log(`Skipping ${srcFile}, already exists`, { type: 'error' });
+            return true;
+          }
         }
-      }
 
-      await sftp.fastPut(srcFile, dstFile);
-    } catch (e) {
-      log(`Could not upload ${srcFile}`, { type: 'error' });
+        if (host.useFastPut) await sftp.fastPut(srcFile, dstFile);
+        else await sftp.put(srcFile, dstFile);
+        return true;
+      } catch (e) {
+        console.error(e);
+        log(`Could not upload ${srcFile}`, { type: 'error' });
+        return false;
+      }
+    }, i === filteredSrcFiles.length - 1);
+
+    if (results.includes(false)) {
       return false;
     }
   }
